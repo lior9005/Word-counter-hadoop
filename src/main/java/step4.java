@@ -37,8 +37,8 @@ public class Step4 {
         System.out.println("[DEBUG] STEP 4 started!");
         System.out.println(args.length > 0 ? args[0] : "no args");
 
-        Path inputPath =new Path("s3://MR-bucket/Step3-output/");
-        Path outputPath =new Path("s3://MR-bucket/Step4-output/");
+        Path inputPath =new Path("s3://eden-mr-bucket/Step3-output/");
+        Path outputPath =new Path("s3://eden-mr-bucket/Step4-output/");
         Configuration conf = new Configuration();
 
         Job job = Job.getInstance(conf, "Step 4");

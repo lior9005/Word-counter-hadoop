@@ -15,14 +15,41 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
+import com.amazonaws.services.s3.model.S3Object;
+import com.amazonaws.services.s3.model.S3ObjectInputStream;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.HashSet;
+import java.util.Set;
 
 public class Step1 {
 
     public static class Step1Mapper extends Mapper<LongWritable, Text, FirstKey, LongWritable> {
+
+    private Set<String> stopWords = new HashSet<>();
+
+    @Override
+    protected void setup(Context context) throws IOException {
+        // Initialize the Amazon S3 client
+        AmazonS3 s3Client = AmazonS3ClientBuilder.standard().build();
+        
+        S3Object s3Object = s3Client.getObject("eden-mr-bucket", "heb-stopwords.txt");
+        S3ObjectInputStream inputStream = s3Object.getObjectContent();
+        
+        //read the stop words from the file and add them to the HashSet
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                stopWords.add(line.trim());
+            }
+        } catch (IOException e) {
+            throw new IOException("Error reading stopwords file from S3", e);
+        }
+    }
 
 //legal pattern - maybe to check if its hebrew?
 
@@ -33,8 +60,15 @@ public class Step1 {
 			if(words.length != 3)   
                 return;
             
+            //check if any word in the trigram is a stop word
+            if (stopWords.contains(words[0]) || stopWords.contains(words[1]) || stopWords.contains(words[2])) {
+                return; 
+            }
+
 			LongWritable value = new LongWritable (Long.parseLong(details[2]));	
 
+            //for trigram "a b c":
+            //      emit(a,b,c), emit(a,b,*), emit(b,c,*), emit(a,*,*), emit(b,*,*), emit(c,*,*), emit(C_0,*,*), 
 			context.write(new FirstKey(words[0],words[1], words[2]), value);
             context.write(new FirstKey(words[0],words[1], "*"), value);
             context.write(new FirstKey(words[1], words[2], "*"), value);
@@ -82,7 +116,7 @@ public class Step1 {
 			InputStream stream = new ByteArrayInputStream(value.getBytes());
 			ObjectMetadata data = new ObjectMetadata();
 			data.setContentLength(value.getBytes().length);
-			PutObjectRequest req = new PutObjectRequest("MR-bucket/C_0", "C_0", stream ,data);   
+			PutObjectRequest req = new PutObjectRequest("eden-mr-bucket/C_0", "C_0", stream ,data);   
 			s3.putObject(req);
 		}
 	}

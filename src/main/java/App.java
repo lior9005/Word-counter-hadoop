@@ -1,4 +1,6 @@
+import com.amazonaws.AmazonServiceException;
 import com.amazonaws.auth.AWSCredentialsProvider;
+import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.profile.ProfileCredentialsProvider;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.ec2.AmazonEC2;
@@ -9,14 +11,14 @@ import com.amazonaws.services.elasticmapreduce.model.*;
 
 public class App {
     public static AWSCredentialsProvider credentialsProvider;
-    public static AmazonS3 S3;
-    public static AmazonEC2 ec2;
+    //public static AmazonS3 S3;
+    //public static AmazonEC2 ec2;
     public static AmazonElasticMapReduce emr;
 
-    public static int numberOfInstances = 4;
+    public static int numberOfInstances = 10;
 
     public static void main(String[]args){
-        credentialsProvider = new ProfileCredentialsProvider();
+        credentialsProvider = new AWSStaticCredentialsProvider(new ProfileCredentialsProvider().getCredentials());
         
         System.out.println("[INFO] Connecting to aws");
 
@@ -30,8 +32,8 @@ public class App {
         System.out.println( emr.listClusters());
 
         HadoopJarStepConfig hadoopJarStep1 = new HadoopJarStepConfig()
-                .withJar("s3://MR-bucket/Step1.jar")
-                .withArgs("s3://datasets.elasticmapreduce/ngrams/books/20090715/heb-all/3gram/data", "s3://MR-bucket/Step1-output/");
+                .withJar("s3://eden-mr-bucket/Step1.jar")
+                .withArgs("s3://datasets.elasticmapreduce/ngrams/books/20090715/heb-all/3gram/data", "s3://eden-mr-bucket/Step1-output/");
 
         StepConfig step1Config = new StepConfig()
                 .withName("Step1")
@@ -39,8 +41,8 @@ public class App {
                 .withActionOnFailure("TERMINATE_JOB_FLOW");
 
         HadoopJarStepConfig hadoopJarStep2 = new HadoopJarStepConfig()
-                .withJar("s3://MR-bucket/Step2.jar")
-                .withArgs();
+                .withJar("s3://eden-mr-bucket/Step2.jar")
+                .withArgs(" ");
 
         StepConfig step2Config = new StepConfig()
                 .withName("Step2")
@@ -48,8 +50,8 @@ public class App {
                 .withActionOnFailure("TERMINATE_JOB_FLOW");
 
         HadoopJarStepConfig hadoopJarStep3 = new HadoopJarStepConfig()
-                .withJar("s3://MR-bucket/Step3.jar")
-                .withArgs();
+                .withJar("s3://eden-mr-bucket/Step3.jar")
+                .withArgs(" ");
 
         StepConfig step3Config = new StepConfig()
                 .withName("Step3")
@@ -57,8 +59,8 @@ public class App {
                 .withActionOnFailure("TERMINATE_JOB_FLOW");
 
         HadoopJarStepConfig hadoopJarStep4 = new HadoopJarStepConfig()
-                .withJar("s3://MR-bucket/Step4.jar")
-                .withArgs();
+                .withJar("s3://eden-mr-bucket/Step4.jar")
+                .withArgs(" ");
 
         StepConfig step4Config = new StepConfig()
                 .withName("Step4")
@@ -69,7 +71,7 @@ public class App {
                 .withInstanceCount(numberOfInstances)
                 .withMasterInstanceType(InstanceType.M4Large.toString())
                 .withSlaveInstanceType(InstanceType.M4Large.toString())
-                .withHadoopVersion("2.6.0").withEc2KeyName("MR-ec2")
+                .withHadoopVersion("2.6.0").withEc2KeyName("mr-ec2")
                 .withKeepJobFlowAliveWhenNoSteps(false)
                 .withPlacement(new PlacementType("us-east-1a"));
 
@@ -79,12 +81,21 @@ public class App {
                 .withName("Map-Reducer-Word-Counter")
                 .withInstances(instances)
                 .withSteps(step1Config, step2Config, step3Config, step4Config)
-                .withLogUri("s3://MR-bucket/logs/")
+                .withLogUri("s3://eden-mr-bucket/logs/")
                 .withServiceRole("EMR_DefaultRole")
                 .withJobFlowRole("EMR_EC2_DefaultRole");
 
-        RunJobFlowResult runJobFlowResult = emr.runJobFlow(runFlowRequest);
-        String jobFlowId = runJobFlowResult.getJobFlowId();
-        System.out.println("Ran job flow with id: " + jobFlowId);
+        try {
+                RunJobFlowResult runJobFlowResult = emr.runJobFlow(runFlowRequest);
+                String jobFlowId = runJobFlowResult.getJobFlowId();
+                System.out.println("Ran job flow with id: " + jobFlowId);
+        } catch (AmazonServiceException e) {
+                System.err.println("Error Message:    " + e.getMessage());
+                System.err.println("HTTP Status Code: " + e.getStatusCode());
+                System.err.println("AWS Error Code:   " + e.getErrorCode());
+                System.err.println("Error Type:       " + e.getErrorType());
+                System.err.println("Request ID:       " + e.getRequestId());
+                e.printStackTrace();
+        }
     }
 }

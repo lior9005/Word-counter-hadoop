@@ -40,7 +40,7 @@ public class Step3 {
         Long C_0;
 		public void setup(Context output) throws IOException {
 			AmazonS3 s3 = AmazonS3ClientBuilder.standard().withRegion(Regions.US_WEST_2).build();
-			S3Object s3Object = s3.getObject(new GetObjectRequest(output.getConfiguration().get("tempFilesPath"), "C_0"));
+			S3Object s3Object = s3.getObject(new GetObjectRequest("eden-mr-bucket/C_0", "C_0"));
 			BufferedReader reader = new BufferedReader(new InputStreamReader(s3Object.getObjectContent()));
 			C_0 = Long.parseLong(reader.readLine());
 		}
@@ -84,8 +84,8 @@ public class Step3 {
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(Text.class);
 
-        FileInputFormat.addInputPath(job, new Path("s3:///MR-bucket/Step2-output/"));
-        FileOutputFormat.setOutputPath(job, new Path("s3:///MR-bucket/Step3-output/"));
+        FileInputFormat.addInputPath(job, new Path("s3:///eden-mr-bucket/Step2-output/"));
+        FileOutputFormat.setOutputPath(job, new Path("s3:///eden-mr-bucket/Step3-output/"));
         System.exit(job.waitForCompletion(true) ? 0 : 1);
     }
 }
