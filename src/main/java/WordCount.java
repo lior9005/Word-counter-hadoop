@@ -38,7 +38,6 @@ public class WordCount {
             }
             context.write(key, new IntWritable(sum));
         }
-    }
 
     public static class PartitionerClass extends Partitioner<Text, IntWritable> {
         @Override
@@ -74,4 +73,5 @@ public class WordCount {
     }
 
 
+    }
 }
