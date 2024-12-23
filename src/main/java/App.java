@@ -26,7 +26,7 @@ public class App {
                 .build();
         S3 = AmazonS3ClientBuilder.standard()
                 .withCredentials(credentialsProvider)
-                .withRegion("us-east-1")
+                .withRegion("us-west-2")
                 .build();
         emr = AmazonElasticMapReduceClientBuilder.standard()
                 .withCredentials(credentialsProvider)
