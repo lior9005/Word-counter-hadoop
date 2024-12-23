@@ -1,9 +1,7 @@
 import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.auth.profile.ProfileCredentialsProvider;
 import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.ec2.AmazonEC2;
-import com.amazonaws.services.ec2.AmazonEC2ClientBuilder;
 import com.amazonaws.services.ec2.model.InstanceType;
 import com.amazonaws.services.elasticmapreduce.AmazonElasticMapReduce;
 import com.amazonaws.services.elasticmapreduce.AmazonElasticMapReduceClientBuilder;
@@ -15,55 +13,75 @@ public class App {
     public static AmazonEC2 ec2;
     public static AmazonElasticMapReduce emr;
 
-    public static int numberOfInstances = 1;
+    public static int numberOfInstances = 4;
 
     public static void main(String[]args){
         credentialsProvider = new ProfileCredentialsProvider();
+        
         System.out.println("[INFO] Connecting to aws");
-        ec2 = AmazonEC2ClientBuilder.standard()
-                .withCredentials(credentialsProvider)
-                .withRegion("us-east-1")
-                .build();
-        S3 = AmazonS3ClientBuilder.standard()
-                .withCredentials(credentialsProvider)
-                .withRegion("us-west-2")
-                .build();
+
         emr = AmazonElasticMapReduceClientBuilder.standard()
                 .withCredentials(credentialsProvider)
                 .withRegion("us-east-1")
                 .build();
+        
+// what is this for?
         System.out.println( "list cluster");
         System.out.println( emr.listClusters());
 
-        // Step 1
-        HadoopJarStepConfig step1 = new HadoopJarStepConfig()
-                .withJar("s3://bucket163897429777/jars/WordCount.jar")
-                .withMainClass("Step1");
+        HadoopJarStepConfig hadoopJarStep1 = new HadoopJarStepConfig()
+                .withJar("s3://MR-bucket/Step1.jar")
+                .withArgs("s3://datasets.elasticmapreduce/ngrams/books/20090715/heb-all/3gram/data", "s3://MR-bucket/Step1-output/");
 
-        StepConfig stepConfig1 = new StepConfig()
+        StepConfig step1Config = new StepConfig()
                 .withName("Step1")
-                .withHadoopJarStep(step1)
+                .withHadoopJarStep(hadoopJarStep1)
                 .withActionOnFailure("TERMINATE_JOB_FLOW");
 
-        //Job flow
+        HadoopJarStepConfig hadoopJarStep2 = new HadoopJarStepConfig()
+                .withJar("s3://MR-bucket/Step2.jar")
+                .withArgs();
+
+        StepConfig step2Config = new StepConfig()
+                .withName("Step2")
+                .withHadoopJarStep(hadoopJarStep2)
+                .withActionOnFailure("TERMINATE_JOB_FLOW");
+
+        HadoopJarStepConfig hadoopJarStep3 = new HadoopJarStepConfig()
+                .withJar("s3://MR-bucket/Step3.jar")
+                .withArgs();
+
+        StepConfig step3Config = new StepConfig()
+                .withName("Step3")
+                .withHadoopJarStep(hadoopJarStep3)
+                .withActionOnFailure("TERMINATE_JOB_FLOW");
+
+        HadoopJarStepConfig hadoopJarStep4 = new HadoopJarStepConfig()
+                .withJar("s3://MR-bucket/Step4.jar")
+                .withArgs();
+
+        StepConfig step4Config = new StepConfig()
+                .withName("Step4")
+                .withHadoopJarStep(hadoopJarStep4)
+                .withActionOnFailure("TERMINATE_JOB_FLOW");
+
         JobFlowInstancesConfig instances = new JobFlowInstancesConfig()
                 .withInstanceCount(numberOfInstances)
                 .withMasterInstanceType(InstanceType.M4Large.toString())
                 .withSlaveInstanceType(InstanceType.M4Large.toString())
-                .withHadoopVersion("2.9.2")
-                .withEc2KeyName("vockey")
+                .withHadoopVersion("2.6.0").withEc2KeyName("MR-ec2")
                 .withKeepJobFlowAliveWhenNoSteps(false)
                 .withPlacement(new PlacementType("us-east-1a"));
 
         System.out.println("Set steps");
+
         RunJobFlowRequest runFlowRequest = new RunJobFlowRequest()
-                .withName("Map reduce project")
+                .withName("Map-Reducer-Word-Counter")
                 .withInstances(instances)
-                .withSteps(stepConfig1)
-                .withLogUri("s3://bucket163897429777/logs/")
+                .withSteps(step1Config, step2Config, step3Config, step4Config)
+                .withLogUri("s3://MR-bucket/logs/")
                 .withServiceRole("EMR_DefaultRole")
-                .withJobFlowRole("EMR_EC2_DefaultRole")
-                .withReleaseLabel("emr-5.11.0");
+                .withJobFlowRole("EMR_EC2_DefaultRole");
 
         RunJobFlowResult runJobFlowResult = emr.runJobFlow(runFlowRequest);
         String jobFlowId = runJobFlowResult.getJobFlowId();
