@@ -1,34 +1,19 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>org.example</groupId>
-    <artifactId>LocalApp</artifactId>
-    <version>1.0-SNAPSHOT</version>
-
-    <properties>
-        <maven.compiler.source>8</maven.compiler.source>
-        <maven.compiler.target>8</maven.compiler.target>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    </properties>
-
+    <groupId>org.mapReduce</groupId>
+    <artifactId>maven-jar-plugin</artifactId>
+    <version>1.0</version>
+    <packaging>jar</packaging>
 
     <dependencyManagement>
         <dependencies>
             <dependency>
                 <groupId>software.amazon.awssdk</groupId>
                 <artifactId>bom</artifactId>
-                <version>2.18.16</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-
-            <dependency>
-                <groupId>com.amazonaws</groupId>
-                <artifactId>aws-java-sdk-bom</artifactId>
-                <version>1.11.715</version>
+                <version>2.5.10</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -36,72 +21,143 @@
     </dependencyManagement>
 
     <dependencies>
-
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>2.0.4</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-simple</artifactId>
-            <version>2.0.4</version>
-        </dependency>
-
-        <dependency>
-            <groupId>software.amazon.awssdk</groupId>
-            <artifactId>s3</artifactId>
-            <version>2.18.16</version>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>software.amazon.awssdk</groupId>
-            <artifactId>ec2</artifactId>
-            <version>2.18.16</version>
-            <scope>test</scope>
-        </dependency>
-
         <dependency>
             <groupId>com.amazonaws</groupId>
-            <artifactId>aws-java-sdk-s3</artifactId>
+            <artifactId>aws-java-sdk-emr</artifactId>
+            <version>1.12.129</version>
         </dependency>
         <dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>aws-java-sdk-ec2</artifactId>
+            <version>1.12.129</version>
         </dependency>
-
         <dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>aws-java-sdk-s3</artifactId>
-            <version>1.12.349</version>
+            <version>1.12.129</version>
         </dependency>
-
-        <dependency>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-common</artifactId>
-            <version>2.6.0</version>
-        </dependency>
-
         <dependency>
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-client</artifactId>
             <version>2.6.0</version>
-            <scope>provided</scope>
         </dependency>
-
         <dependency>
             <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-mapreduce-client-core</artifactId>
+            <artifactId>hadoop-mapreduce-client-common</artifactId>
             <version>2.6.0</version>
         </dependency>
-
         <dependency>
-            <groupId>com.amazonaws</groupId>
-            <artifactId>aws-java-sdk-emr</artifactId>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>2.6</version>
         </dependency>
-
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-core</artifactId>
+            <version>2.20.0</version> <!-- Use the latest version available -->
+        </dependency>
+            <!-- Log4j Dependency -->
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-api</artifactId>
+            <version>2.20.0</version> <!-- Use the latest version available -->
+        </dependency>
     </dependencies>
+
+<build>
+  <plugins>
+    <plugin>
+      <groupId>org.apache.maven.plugins</groupId>
+      <artifactId>maven-shade-plugin</artifactId>
+      <version>3.2.1</version>
+      <executions>
+        <!-- Step 1: Creating Step1Jar -->
+        <execution>
+          <id>step1-jar</id>
+          <phase>package</phase>
+          <goals>
+            <goal>shade</goal>
+          </goals>
+          <configuration>
+            <finalName>step1</finalName>
+            <transformers>
+              <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                <mainClass>Step1</mainClass> <!-- Main class for Step1 -->
+              </transformer>
+            </transformers>
+          </configuration>
+        </execution>
+
+        <!-- Step 2: Creating Step2Jar -->
+        <execution>
+          <id>step2-jar</id>
+          <phase>package</phase>
+          <goals>
+            <goal>shade</goal>
+          </goals>
+          <configuration>
+            <finalName>step2</finalName>
+            <transformers>
+              <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                <mainClass>Step2</mainClass> <!-- Main class for Step2 -->
+              </transformer>
+            </transformers>
+          </configuration>
+        </execution>
+
+        <!-- Step 3: Creating Step3Jar -->
+        <execution>
+          <id>step3-jar</id>
+          <phase>package</phase>
+          <goals>
+            <goal>shade</goal>
+          </goals>
+          <configuration>
+            <finalName>step3</finalName>
+            <transformers>
+              <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                <mainClass>Step3</mainClass> <!-- Main class for Step3 -->
+              </transformer>
+            </transformers>
+          </configuration>
+        </execution>
+
+        <!-- Step 4: Creating Step4Jar -->
+        <execution>
+          <id>step4-jar</id>
+          <phase>package</phase>
+          <goals>
+            <goal>shade</goal>
+          </goals>
+          <configuration>
+            <finalName>step4</finalName>
+            <transformers>
+              <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                <mainClass>Step4</mainClass> <!-- Main class for Step4 -->
+              </transformer>
+            </transformers>
+          </configuration>
+        </execution>
+
+        <!-- Step 5: Creating Step5Jar -->
+        <execution>
+          <id>App-jar</id>
+          <phase>package</phase>
+          <goals>
+            <goal>shade</goal>
+          </goals>
+          <configuration>
+            <finalName>App</finalName>
+            <transformers>
+              <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                <mainClass>App</mainClass> <!-- Main class for Step5 -->
+              </transformer>
+            </transformers>
+          </configuration>
+        </execution>
+      </executions>
+    </plugin>
+  </plugins>
+</build>
 
 </project>

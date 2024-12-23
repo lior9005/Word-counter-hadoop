@@ -149,8 +149,8 @@ public class Step2{
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(Text.class);
 
-        FileInputFormat.addInputPath(job, new Path("s3:///MR-bucket/Step1-output/"));
-        FileOutputFormat.setOutputPath(job, new Path("s3:///MR-bucket/Step2-output/"));
+        FileInputFormat.addInputPath(job, new Path("s3:///eden-mr-bucket/Step1-output/"));
+        FileOutputFormat.setOutputPath(job, new Path("s3:///eden-mr-bucket/Step2-output/"));
         System.exit(job.waitForCompletion(true) ? 0 : 1);
     }
 }
