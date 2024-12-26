@@ -9,6 +9,7 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.input.SequenceFileInputFormat;
+import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3;
@@ -37,7 +38,7 @@ public class Step1 {
         // Initialize the Amazon S3 client
         AmazonS3 s3Client = AmazonS3ClientBuilder.standard().build();
         
-        S3Object s3Object = s3Client.getObject("eden-mr-bucket", "heb-stopwords.txt");
+        S3Object s3Object = s3Client.getObject("lior-mr", "heb-stopwords.txt");
         S3ObjectInputStream inputStream = s3Object.getObjectContent();
         
         //read the stop words from the file and add them to the HashSet
@@ -116,7 +117,7 @@ public class Step1 {
 			InputStream stream = new ByteArrayInputStream(value.getBytes());
 			ObjectMetadata data = new ObjectMetadata();
 			data.setContentLength(value.getBytes().length);
-			PutObjectRequest req = new PutObjectRequest("eden-mr-bucket/C_0", "C_0", stream ,data);   
+			PutObjectRequest req = new PutObjectRequest("lior-mr/C_0", "C_0", stream ,data);   
 			s3.putObject(req);
 		}
 	}
@@ -129,7 +130,6 @@ public class Step1 {
     }
 
     public static void main(String[] args) throws Exception {
-        System.out.println("[DEBUG] STEP 1 started!");
         System.out.println(args.length > 0 ? args[0] : "no args");
 
         Path inputPath =new Path(args[0]);

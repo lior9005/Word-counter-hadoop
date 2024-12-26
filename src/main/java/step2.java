@@ -144,13 +144,12 @@ public class Step2{
         job.setMapperClass(Step2Mapper.class);
         job.setPartitionerClass(Step2Partitioner.class);
         job.setReducerClass(Step2Reducer.class);
-        job.setNumReduceTasks(3);
         job.setInputFormatClass(TextInputFormat.class);
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(Text.class);
 
-        FileInputFormat.addInputPath(job, new Path("s3:///eden-mr-bucket/Step1-output/"));
-        FileOutputFormat.setOutputPath(job, new Path("s3:///eden-mr-bucket/Step2-output/"));
+        FileInputFormat.addInputPath(job, new Path("s3://lior-mr/Step1-output/"));
+        FileOutputFormat.setOutputPath(job, new Path("s3://lior-mr/Step2-output/"));
         System.exit(job.waitForCompletion(true) ? 0 : 1);
     }
 }
