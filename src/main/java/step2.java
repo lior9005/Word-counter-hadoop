@@ -26,6 +26,7 @@ public class Step2{
             Long occNum = Long.parseLong(parsedLine[1]);
             String[] words = filterAsteriks(parsedLine[0].split(" ")); //filter asteriks
 
+            //context format: <key, value, identifier>
             if(words.length == 3){
                 String w1w2 = words[0] + " " + words[1];
                 String w2w3 = words[1] + " " + words[2];
@@ -38,10 +39,11 @@ public class Step2{
                 //writing w2,w3
                 context.write(new Text(words[1]), value);
                 if(!words[1].equals(words[2])){
-                    context.write(new Text(words[1]), value);
+                    context.write(new Text(words[2]), value);
                 }                
             }
             else{
+                
                 Text value = valueGenerator(words, occNum, false);
                 context.write(new Text(StringArrayToWords(words)), value);
             }
@@ -87,18 +89,18 @@ public class Step2{
 
             for(Text value : values){
                 String[] parsedValue = value.toString().split("\t");
-                if(parsedValue[1].equals("t")){
+                if(parsedValue[2].equals("t")){
                     triplets.add(parsedValue);
                 }
                 else{
-                    occNum = Long.parseLong(parsedValue[2]);
+                    occNum = Long.parseLong(parsedValue[1]);
                 }
             }
 
             for(String[] triplet : triplets){
                 Long[] C_1N_1 = new Long[2];
 				Long[] C_2N_2 = new Long[2];
-                Long tripletOcc = Long.parseLong(triplet[2]);
+                Long tripletOcc = Long.parseLong(triplet[1]);
                 String[] tripletWords = triplet[0].split(" ");
                 if (parsedKey.length == 1) { //one word
                     if (tripletWords[1].equals(parsedKey[0])) {

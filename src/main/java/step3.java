@@ -39,7 +39,7 @@ public class Step3 {
     public static class Step3Reducer extends Reducer<ThirdKey, Text, Text, DoubleWritable> {
         Long C_0;
 		public void setup(Context output) throws IOException {
-			AmazonS3 s3 = AmazonS3ClientBuilder.standard().withRegion(Regions.US_WEST_2).build();
+			AmazonS3 s3 = AmazonS3ClientBuilder.standard().withRegion(Regions.US_EAST_1).build();
 			S3Object s3Object = s3.getObject(new GetObjectRequest("lior-mr/C_0", "C_0"));
 			BufferedReader reader = new BufferedReader(new InputStreamReader(s3Object.getObjectContent()));
 			C_0 = Long.parseLong(reader.readLine());
@@ -80,6 +80,8 @@ public class Step3 {
         job.setMapperClass(Step3Mapper.class);
         job.setReducerClass(Step3Reducer.class);
         job.setInputFormatClass(TextInputFormat.class);
+        job.setMapOutputKeyClass(ThirdKey.class);
+        job.setMapOutputValueClass(Text.class);
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(Text.class);
 

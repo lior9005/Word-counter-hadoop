@@ -60,9 +60,12 @@ public class Step1 {
 			String words[] = details[0].split(" ");
 			if(words.length != 3)   
                 return;
-            
+            words[0] = words[0].trim();
+            words[1] = words[1].trim();
+            words[2] = words[2].trim();
             //check if any word in the trigram is a stop word
             if (stopWords.contains(words[0]) || stopWords.contains(words[1]) || stopWords.contains(words[2])) {
+                System.out.println("line: " + line.toString()); 
                 return; 
             }
 
