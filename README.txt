@@ -1,144 +1,85 @@
-Ass_2 - Map-Reduce (Hadoop)
-Creators : Eden Miran and Lior Sharony
-UserNames : mirane@post.bgu.ac.il   sharoli@post.bgu.ac.il
-ids: 314868019  316380138
+# Map-Reduce (Hadoop) Assignment  
+Creators: Eden Miran and Lior Sharony  
+Usernames: mirane@post.bgu.ac.il, sharoli@post.bgu.ac.il  
+IDs: 314868019, 316380138  
 
-*how to run the project*
-    - run the command 'mvn install' to create the jar to execute
-    - run the command java -jar target/App.jar to execute the program
+---
 
-*implementation*
+## How to Run the Project  
+1. Execute the following command to build the project and create the executable JAR file:  
+   mvn install
 
-We implemented the task using 4 steps:
-    - step 1: in charge of accumulating the number of occurences of each triplet, the pairs in the triplets and the single words in it
-    
-    - step 2: 
-        Mapper Phase:
-            Mapper Input: The input consists of lines of text, each containing words and an occurrence count.
+2. Run the project using the following command:  
+   java -jar target/App.jar
 
-            The input lines are split into words, and we create keys that represent either a word pair or an individual word:
-                For 3-grams, the Mapper generates two pairs: w1w2 and w2w3. This allows the Mapper to efficiently analyze two consecutive word pairs from the triplet.
-                It also generates a key for the individual word (w2, w3) based on its position in the triplet.
+---
 
-            Value Structure:
-                The value holds three pieces of information:
-                    -The words (joined into a single string)
-                    -The occurrence count of the words
-                    -A tag indicating whether this value is from a triplet ("t") or from a single word pair ("f").
-                This design ensures that the Reducer can differentiate between data from triplets and individual word pairs and compute the necessary counts accordingly.
-        
-        Reducer Phase:
+## Implementation Overview  
 
-            The Reducer processes the grouped key-value pairs to compute aggregate results (as an array):
-                 Input Data Processing:
-                    Iterates through values associated with each key.
-                    Differentiates between triplet data and individual word pair occurrences.
-        Computations:
-            Aggregates counts for individual words (C_1, N_1) and word pairs (C_2, N_2).
-            Processes each triplet's data to generate final statistics.
+This project consists of four steps, implemented as separate Map-Reduce jobs. Each step processes data and generates intermediate results for the subsequent step.
 
-    - step 2: 
-        Mapper Phase:
-            Mapper Input: The input consists of lines of text, each containing words and an occurrence count.
+### Step 1: Word Counter  
+    Purpose: To count the occurrences of:  
+        1. Individual words.  
+        2. Word pairs.  
+        3. Triplets (3-grams).  
 
-            The input lines are split into words, and we create keys that represent either a word pair or an individual word:
-                For 3-grams, the Mapper generates two pairs: w1w2 and w2w3. This allows the Mapper to efficiently analyze two consecutive word pairs from the triplet.
-                It also generates a key for the individual word (w2, w3) based on its position in the triplet.
+    **Output**:  
+        Each triplet is represented with placeholders (`*`) for missing words or pairs, providing a complete dataset for downstream processing.
 
-            Value Structure:
-                The value holds three pieces of information:
-                    -The words (joined into a single string)
-                    -The occurrence count of the words
-                    -A tag indicating whether this value is from a triplet ("t") or from a single word pair ("f").
-                This design ensures that the Reducer can differentiate between data from triplets and individual word pairs and compute the necessary counts accordingly.
+---
 
-         Reducer Phase:   
-    Key: Represents an individual word, a word pair, or a triplet.
-        Examples:
-            w1w2 (word pair)
-            w2w3 (word pair)
-            w1w2w3 (triplet)
+### Step 2: Formula Generator  
+    **Mapper Phase**:  
+        - **Input**:  
+            Each line consists of a triplet and its occurrence count.  
+        - **Processing**:  
+            1. Splits triplets into two pairs (`w1w2` and `w2w3`).  
+            2. Generates keys for word pairs and individual words based on the triplet structure.  
+            3. Assigns a tag to distinguish values from triplet (`t`) and values from pairs or single (`f`).  
 
-    Values: A list of values associated with the key, which include:
-        Counts of occurrences.
-        Tags that distinguish the data type - "t" for triplets: Indicates that this value is part of a 3-gram triplet.
-                                              "f" for word pairs: Indicates that this value belongs to an individual word pair or a single word.
-            
-    Aggregation of Counts:
-        For Individual Words:
-            Counts (C1) represent the number of times a specific word appears in any context.
-            These counts are calculated by summing values tagged as "f".
-        For Word Pairs:
-            Counts (C2) represent how often a specific word pair (e.g., w1w2 or w2w3) appears in the dataset.
-            These counts are calculated by summing "f" values.
-        For Triplets:
-            Counts (C3) represent the number of times a specific triplet (e.g., w1w2w3) occurs.
-            These are extracted from "t" tagged values.
+    **Reducer Phase**:  
+        - **Processing**:  
+               The reducer iterates over all values associated with the key:
+            - If the key is a **word pair** (tag `f`), it adds its occurrence count to the corresponding pair counts (`C_1` or `C_2`) and updates the word frequencies (`N_1`, `N_2`).
+            - If the key is a **triplet** (tag `t`), it updates the count for the triplet (`N_3`).
+            - The values associated with a key can be:
+                - For a triplet: The occurrence of that triplet.
+                - For a word pair: The occurrence of that word pair.
+            finaly itAggregates counts to compute formula parameters (`C_1`, `N_1`, `C_2`, `N_2`, `N_3`).  
+        - **Output**:  
+            An array of statistics for each key, used for probability calculation in Step 3.
 
-    Statistical Computation for Triplets:
-        For each triplet (w1w2w3), the Reducer computes:
-            Counts of w1, w2, w3 as individual words (C1, N1).
-            Counts of word pairs (C2, N2) such as w1w2 and w2w3.
-            Counts of the triplet itself (C3).
+---
 
-    Output Emission:
-        The Reducer emits:
-            The triplet as the key.
-            A formatted string as the value, containing:
-                Counts for individual words.
-                Counts for word pairs.
-                Counts for the triplet.
+### Step 3: Probability Generator  
+    **Mapper Phase**:  
+        - **Input**:  
+            Each line contains a triplet and its associated statistics array.  
+        - **Processing**:  
+            Converts the input into a `ThirdKey` object, allowing the shuffle and sort phase to group all values for the same key.  
 
-Helper Methods in Reducer
+    **Reducer Phase**:  
+        - **Processing**:  
+            1. Merges the values into a single array for each key, filling in missing spots (`-1`).  
+            2. Computes the probability using the formula:
+                P = K_3 * N_3 / C_2 + (1 - K_3) * K_2 * N_2 / C_1 + (1 - K_3) * (1 - K_2) * N_1 / C_0
+                where K_2 and K_3 are smoothing coefficients.  
 
-    generateFormulaValues:
-        Constructs a formatted output string to encapsulate computed statistics.
-        Example:
+        **Output**:  
+            A triplet with its calculated probability.
 
-        Input:
-          C1: 50, N1: 200, C2: 30, N2: 100, C3: 10
-        Output:
-          "C1=50, N1=200, C2=30, N2=100, C3=10"
+---
 
-    StringArrayToWords:
-        Combines an array of strings (words) into a single string, ensuring proper formatting for triplets or word pairs.
+### Step 4: Sorter  
+    **Purpose**:  
+        To sort the triplets by their probabilities.  
 
-    filterAsteriks:
-        Cleanses input data by removing asterisks (*), ensuring clean keys and values.
+    **Mapper Phase**:  
+        - Moves the probability value into the key field to ensure sorting is based on probabilities during the shuffle and sort phase.  
 
-Reducer Output Example
+    **Reducer Phase**:  
+        - Outputs the sorted triplets along with their probabilities.
 
-For a given triplet w1w2w3 with the following input:
+---
 
-    Individual word counts:
-        w1: 50
-        w2: 100
-        w3: 80
-    Word pair counts:
-        w1w2: 40
-        w2w3: 60
-    Triplet count:
-        w1w2w3: 20
-
-The Reducer emits:
-
-Key: w1w2w3
-Value: "C1=50, N1=100, C2=40, N2=60, C3=20"
-
-Challenges Handled by the Reducer
-
-    Data Disambiguation:
-        Differentiates between triplet data and individual word or word pair counts using tags (t, f).
-
-    Aggregation Across Groups:
-        Aggregates counts across all values for a given key efficiently.
-
-    Performance Optimization:
-        Processes only the required data for each key, avoiding redundant computations.
-
-    Preparation for Further Analysis:
-        Outputs detailed statistics for each triplet, making it suitable for subsequent steps or machine learning tasks.
-
-Conclusion
-
-The Reducer step is pivotal in converting raw grouped data into actionable statistical summaries. It ensures accurate tracking of occurrences for individual words, word pairs, and triplets, enabling meaningful insights into the dataset. The logic and helper methods enhance clarity and facilitate scalable processing of large datasets.

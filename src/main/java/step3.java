@@ -2,8 +2,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.BufferedReader;
 
-
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.DoubleWritable;
@@ -28,6 +26,7 @@ import org.apache.hadoop.mapreduce.Reducer;
 
 public class Step3 {
     public static class Step3Mapper extends Mapper<LongWritable, Text, ThirdKey, Text> {
+        
         @Override
         public void map(LongWritable key, Text line, Context context) throws IOException, InterruptedException {
             String[] parsedLine = line.toString().split("\t");
@@ -49,7 +48,7 @@ public class Step3 {
         public void reduce(ThirdKey key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
             Double[] formulaParams = new Double[5];
             for(Text Textvalues : values){
-                String[] input = Textvalues.toString().split(" ");
+                String[] input = Textvalues.toString().trim().split("\\s+");
                 for(int i = 0; i < 5;i++){
                     double num = Double.parseDouble((input[i]));
                     if(num!=-1){
@@ -66,8 +65,8 @@ public class Step3 {
             Double C_2 =  formulaParams[2]; 
             Double N_2 = formulaParams[3];
             Double N_3 = formulaParams[4];
-            double K_2 = (Math.log(N_2 + 1) + 1)/(Math.log(N_2 + 2));
-            double K_3 = (Math.log(N_3 + 1) + 1)/(Math.log(N_3 + 2));
+            double K_2 = (Math.log(N_2 + 1) + 1)/(Math.log(N_2 + 1) + 2);
+            double K_3 = (Math.log(N_3 + 1) + 1)/(Math.log(N_3 + 1) + 2);
             return new DoubleWritable(K_3*N_3/C_2 + (1-K_3)*K_2*N_2/C_1 + (1-K_3)*(1-K_2)*N_1/C_0);
         }
     }

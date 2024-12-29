@@ -9,7 +9,6 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.input.SequenceFileInputFormat;
-import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3;
@@ -18,6 +17,7 @@ import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.amazonaws.services.s3.model.S3Object;
 import com.amazonaws.services.s3.model.S3ObjectInputStream;
+import com.google.re2j.Pattern;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
@@ -31,57 +31,65 @@ public class Step1 {
 
     public static class Step1Mapper extends Mapper<LongWritable, Text, FirstKey, LongWritable> {
 
-    private Set<String> stopWords = new HashSet<>();
-
-    @Override
-    protected void setup(Context context) throws IOException {
-        // Initialize the Amazon S3 client
-        AmazonS3 s3Client = AmazonS3ClientBuilder.standard().build();
-        
-        S3Object s3Object = s3Client.getObject("lior-mr", "heb-stopwords.txt");
-        S3ObjectInputStream inputStream = s3Object.getObjectContent();
-        
-        //read the stop words from the file and add them to the HashSet
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                stopWords.add(line.trim());
-            }
-        } catch (IOException e) {
-            throw new IOException("Error reading stopwords file from S3", e);
-        }
-    }
-
-//legal pattern - maybe to check if its hebrew?
+        // Regular expression for Hebrew words
+        private final Pattern legalPattern = Pattern.compile("[\u05D0-\u05EB]{2,}?");
+        private Set<String> stopWords = new HashSet<>();
 
         @Override
-        public void map(LongWritable key, Text line, Context context) throws IOException,  InterruptedException {
-            String details[] = line.toString().split("\t");
-			String words[] = details[0].split(" ");
-			if(words.length != 3)   
-                return;
-            words[0] = words[0].trim();
-            words[1] = words[1].trim();
-            words[2] = words[2].trim();
-            //check if any word in the trigram is a stop word
-            if (stopWords.contains(words[0]) || stopWords.contains(words[1]) || stopWords.contains(words[2])) {
-                System.out.println("line: " + line.toString()); 
-                return; 
+        protected void setup(Context context) throws IOException {
+            // Initialize the Amazon S3 client
+            AmazonS3 s3Client = AmazonS3ClientBuilder.standard().build();
+            
+            S3Object s3Object = s3Client.getObject("lior-mr", "heb-stopwords.txt");
+            S3ObjectInputStream inputStream = s3Object.getObjectContent();
+            System.err.println("Reading stopwords file from S3");
+            //read the stop words from the file and add them to the HashSet
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    stopWords.add(line.trim());
+                    System.err.println("Stop word: " + line.trim());
+                }
+            } catch (IOException e) {
+                throw new IOException("Error reading stopwords file from S3", e);
             }
-
-			LongWritable value = new LongWritable (Long.parseLong(details[2]));	
-
-            //for trigram "a b c":
-            //      emit(a,b,c), emit(a,b,*), emit(b,c,*), emit(a,*,*), emit(b,*,*), emit(c,*,*), emit(C_0,*,*), 
-			context.write(new FirstKey(words[0],words[1], words[2]), value);
-            context.write(new FirstKey(words[0],words[1], "*"), value);
-            context.write(new FirstKey(words[1], words[2], "*"), value);
-            context.write(new FirstKey(words[0],"*", "*"), value);
-            context.write(new FirstKey(words[1],"*", "*"), value);
-            context.write(new FirstKey(words[2],"*", "*"), value);
-            context.write(new FirstKey("C_0","*", "*"), value);
-
         }
+
+
+            @Override
+            public void map(LongWritable key, Text line, Context context) throws IOException,  InterruptedException {
+                String details[] = line.toString().split("\t");
+                String words[] = details[0].split(" ");
+                if(words.length != 3)   
+                    return;
+                words[0] = words[0].trim();
+                words[1] = words[1].trim();
+                words[2] = words[2].trim();
+
+                //check if the 3-gram is legal
+                if(legalPattern.matcher(words[0]).find() && 
+                    legalPattern.matcher(words[1]).find() &&
+                    legalPattern.matcher(words[2]).find()){	
+                    //check if any word in the trigram is a stop word
+                    if (stopWords.contains(words[0]) || stopWords.contains(words[1]) || stopWords.contains(words[2])) {
+                        System.err.println("line: " + line.toString()); 
+                        return; 
+                    }
+
+                    LongWritable value = new LongWritable (Long.parseLong(details[2]));	
+
+                    //for trigram "a b c":
+                    //      emit(a,b,c), emit(a,b,*), emit(b,c,*), emit(a,*,*), emit(b,*,*), emit(c,*,*), emit(C_0,*,*), 
+                    context.write(new FirstKey(words[0],words[1], words[2]), value);
+                    context.write(new FirstKey(words[0],words[1], "*"), value);
+                    context.write(new FirstKey(words[1], words[2], "*"), value);
+                    context.write(new FirstKey(words[0],"*", "*"), value);
+                    context.write(new FirstKey(words[1],"*", "*"), value);
+                    context.write(new FirstKey(words[2],"*", "*"), value);
+                    context.write(new FirstKey("C_0","*", "*"), value);
+
+                }
+            }
     }
 
 	public static class Step1Combiner extends Reducer<FirstKey, LongWritable, FirstKey, LongWritable>{
@@ -133,7 +141,6 @@ public class Step1 {
     }
 
     public static void main(String[] args) throws Exception {
-        System.out.println(args.length > 0 ? args[0] : "no args");
 
         Path inputPath =new Path(args[0]);
         Path outputPath =new Path(args[1]);
