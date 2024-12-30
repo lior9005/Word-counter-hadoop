@@ -10,7 +10,7 @@ import com.amazonaws.services.elasticmapreduce.model.*;
 public class App {
     public static AWSCredentialsProvider credentialsProvider;
     public static AmazonElasticMapReduce emr;
-    public static int numberOfInstances = 9;
+    public static int numberOfInstances =5;
 
     public static void main(String[]args){
         credentialsProvider = new AWSStaticCredentialsProvider(new ProfileCredentialsProvider().getCredentials());

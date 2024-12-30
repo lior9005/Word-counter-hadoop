@@ -101,7 +101,7 @@ public class Step1 {
         }
     }
 
-	/*public static class Step1Combiner extends Reducer<FirstKey, LongWritable, FirstKey, LongWritable>{
+	public static class Step1Combiner extends Reducer<FirstKey, LongWritable, FirstKey, LongWritable>{
 	
 		@Override
 		public void reduce(FirstKey key, Iterable<LongWritable> values, Context context) throws IOException, InterruptedException
@@ -113,7 +113,7 @@ public class Step1 {
 			context.write(key, new LongWritable(sum));
 		}
 	}
-    */
+
 	public static class Step1Reducer extends Reducer<FirstKey, LongWritable, Text, LongWritable>{
 		 
 		@Override
@@ -158,7 +158,7 @@ public class Step1 {
         Job job = Job.getInstance(conf, "Step 1");
         job.setJarByClass(Step1.class);
         job.setMapperClass(Step1Mapper.class);
-        //job.setCombinerClass(Step1Combiner.class);
+        job.setCombinerClass(Step1Combiner.class);
         job.setReducerClass(Step1Reducer.class);
         job.setMapOutputKeyClass(FirstKey.class);
         job.setMapOutputValueClass(LongWritable.class);

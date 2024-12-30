@@ -85,16 +85,13 @@ public class Step2{
             Long occNum = 0L;
             List<String[]> triplets = new ArrayList<>();
             String[] parsedKey = key.toString().split(" ");
-            System.out.println("Key: " + key.toString());
             for(Text value : values){
                 String[] parsedValue = value.toString().split("\t");
                 if(parsedValue[2].equals("t")){
                     triplets.add(parsedValue);
-                    System.out.println("Triplet: " + parsedValue[0] + " " + parsedValue[1] + " " + parsedValue[2]);
                 }
                 else{
                     occNum = Long.parseLong(parsedValue[1]);
-                    System.out.println("OccNum: " + occNum);
                 }
             }
 
@@ -103,29 +100,27 @@ public class Step2{
                 Long[] C_2N_2 = new Long[2];
                 Arrays.fill(C_1N_1, -1L);
                 Arrays.fill(C_2N_2, -1L);
+
                 Long tripletOcc = Long.parseLong(triplet[1]);
+                
                 String[] tripletWords = triplet[0].split(" ");
                 if (parsedKey.length == 1) { //one word
                     if (tripletWords[1].equals(parsedKey[0])) {
                         C_1N_1[0] = occNum; //w2
-                        System.out.println("C_1N_1[0]: " + C_1N_1[0]);
                     }
                     if (tripletWords[2].equals(parsedKey[0])) {
                         C_1N_1[1] = occNum; //w3
-                        System.out.println("C_1N_1[1]: " + C_1N_1[1]);
                     }
                 }
                 else { //two words
                     if (tripletWords[0].equals(parsedKey[0]) && tripletWords[1].equals(parsedKey[1])) {
                         C_2N_2[0] = occNum; //w1w2
-                        System.out.println("C_2N_2[0]: " + C_2N_2[0]);
                     }
                     if (tripletWords[1].equals(parsedKey[0]) && tripletWords[2].equals(parsedKey[1])) {
                         C_2N_2[1] = occNum; //w2w3
-                        System.out.println("C_2N_2[1]: " + C_2N_2[1]);
                     }
                 }
-                Text formulaValues = generateFormulaValues(C_1N_1, C_2N_2, tripletOcc);
+                Text formulaValues = generateFormulaValues(C_1N_1, C_2N_2, tripletOcc); // C_1, N_1, C_2, N_2, N_3
                 Text contextKey = new Text(tripletWords[0] + " " + tripletWords[1] + " " + tripletWords[2]);
                 context.write(contextKey, formulaValues);
             }
