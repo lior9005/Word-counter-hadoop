@@ -20,7 +20,7 @@ public class App {
                 .withRegion("us-east-1")
                 .build();
         
-        /*HadoopJarStepConfig hadoopJarStep1 = new HadoopJarStepConfig()
+        HadoopJarStepConfig hadoopJarStep1 = new HadoopJarStepConfig()
                 .withJar("s3://lior-mr/step1.jar")
                 .withArgs("s3://datasets.elasticmapreduce/ngrams/books/20090715/heb-all/3gram/data", "s3://lior-mr/Step1-output/");
                 
@@ -50,7 +50,7 @@ public class App {
                 .withName("Step3")
                 .withHadoopJarStep(hadoopJarStep3)
                 .withActionOnFailure("TERMINATE_JOB_FLOW");
-*/
+
         HadoopJarStepConfig hadoopJarStep4 = new HadoopJarStepConfig()
                 .withJar("s3://lior-mr/step4.jar")
                 .withArgs(" ");
@@ -73,8 +73,7 @@ public class App {
         RunJobFlowRequest runFlowRequest = new RunJobFlowRequest()
                 .withName("Map-Reducer-Word-Counter")
                 .withInstances(instances)
-                //.withSteps(step1Config, step2Config, step3Config, step4Config)
-                .withSteps(step4Config)
+                .withSteps(step1Config, step2Config, step3Config, step4Config)
                 .withLogUri("s3://lior-mr/logs/")
                 .withServiceRole("EMR_DefaultRole")
                 .withJobFlowRole("EMR_EC2_DefaultRole")

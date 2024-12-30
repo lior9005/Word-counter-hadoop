@@ -83,3 +83,21 @@ This project consists of four steps, implemented as separate Map-Reduce jobs. Ea
 
 ---
 
+### Report Summary:
+
+    -The complete 3-gram file:
+        -number of mappers (instances) : 9 
+            -number of key-value pairs from mapper to reducer (format: <number of files, size>)
+                with combiner (we used combiner only in step1):
+                    -step1: <4454351, 66686815>
+                    -step2: <7565970, 155933679>
+                    -step3: <6599596, 151390328>
+                    -step4: <1650268, 48257631>
+                without combiner:
+                    -step1: <, >
+                    -step2: <, >
+                    -step3: <, >
+                    -step4: <, >
+            -running time : 21 minutes
+        
+    

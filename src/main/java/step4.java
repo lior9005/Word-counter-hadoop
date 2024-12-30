@@ -34,8 +34,6 @@ public class Step4 {
 	}
 
     public static void main(String[] args) throws Exception {
-        System.out.println("[DEBUG] STEP 4 started!");
-        System.out.println(args.length > 0 ? args[0] : "no args");
 
         Path inputPath =new Path("s3://lior-mr/Step3-output/");
         Path outputPath =new Path("s3://lior-mr/Step4-output/");

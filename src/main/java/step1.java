@@ -56,43 +56,52 @@ public class Step1 {
         }
 
 
-            @Override
-            public void map(LongWritable key, Text line, Context context) throws IOException,  InterruptedException {
-                String details[] = line.toString().split("\t");
-                String words[] = details[0].split(" ");
-                if(words.length != 3)   
-                    return;
-                words[0] = words[0].trim();
-                words[1] = words[1].trim();
-                words[2] = words[2].trim();
+        @Override
+        public void map(LongWritable key, Text line, Context context) throws IOException,  InterruptedException {
+            String details[] = line.toString().split("\t");
+            String words[] = details[0].split(" ");
+            if(words.length != 3)   
+                return;
+                
+            words[0] = words[0].trim();
+            words[1] = words[1].trim();
+            words[2] = words[2].trim();
 
-                //check if the 3-gram is legal
-                if(legalPattern.matcher(words[0]).find() && 
-                    legalPattern.matcher(words[1]).find() &&
-                    legalPattern.matcher(words[2]).find()){	
-                    //check if any word in the trigram is a stop word
-                    if (stopWords.contains(words[0]) || stopWords.contains(words[1]) || stopWords.contains(words[2])) {
-                        System.err.println("line: " + line.toString()); 
-                        return; 
-                    }
+            //check if the 3-gram is legal or contains stop words
+            if(!hebrewWords(words) || containsStopWord(words))
+                return;
 
-                    LongWritable value = new LongWritable (Long.parseLong(details[2]));	
+            LongWritable value = new LongWritable (Long.parseLong(details[2]));	
 
-                    //for trigram "a b c":
-                    //      emit(a,b,c), emit(a,b,*), emit(b,c,*), emit(a,*,*), emit(b,*,*), emit(c,*,*), emit(C_0,*,*), 
-                    context.write(new FirstKey(words[0],words[1], words[2]), value);
-                    context.write(new FirstKey(words[0],words[1], "*"), value);
-                    context.write(new FirstKey(words[1], words[2], "*"), value);
-                    context.write(new FirstKey(words[0],"*", "*"), value);
-                    context.write(new FirstKey(words[1],"*", "*"), value);
-                    context.write(new FirstKey(words[2],"*", "*"), value);
-                    context.write(new FirstKey("C_0","*", "*"), value);
+            //for trigram "a b c":
+            //      emit(a,b,c), emit(a,b,*), emit(b,c,*), emit(a,*,*), emit(b,*,*), emit(c,*,*), emit(C_0,*,*), 
+            context.write(new FirstKey(words[0],words[1], words[2]), value);
+            context.write(new FirstKey(words[0],words[1], "*"), value);
+            context.write(new FirstKey(words[1], words[2], "*"), value);
+            context.write(new FirstKey(words[0],"*", "*"), value);
+            context.write(new FirstKey(words[1],"*", "*"), value);
+            context.write(new FirstKey(words[2],"*", "*"), value);
+            context.write(new FirstKey("C_0","*", "*"), value);
+        }
 
-                }
+        private boolean hebrewWords(String[] words){
+            for(String word : words){
+                if(!legalPattern.matches(word))
+                    return false;
             }
+            return true;
+        }
+
+        private boolean containsStopWord(String[] words){
+            for(String word : words){
+                if(stopWords.contains(word))
+                    return true;
+            }
+            return false;
+        }
     }
 
-	public static class Step1Combiner extends Reducer<FirstKey, LongWritable, FirstKey, LongWritable>{
+	/*public static class Step1Combiner extends Reducer<FirstKey, LongWritable, FirstKey, LongWritable>{
 	
 		@Override
 		public void reduce(FirstKey key, Iterable<LongWritable> values, Context context) throws IOException, InterruptedException
@@ -104,7 +113,7 @@ public class Step1 {
 			context.write(key, new LongWritable(sum));
 		}
 	}
-
+    */
 	public static class Step1Reducer extends Reducer<FirstKey, LongWritable, Text, LongWritable>{
 		 
 		@Override
@@ -149,7 +158,7 @@ public class Step1 {
         Job job = Job.getInstance(conf, "Step 1");
         job.setJarByClass(Step1.class);
         job.setMapperClass(Step1Mapper.class);
-        job.setCombinerClass(Step1Combiner.class);
+        //job.setCombinerClass(Step1Combiner.class);
         job.setReducerClass(Step1Reducer.class);
         job.setMapOutputKeyClass(FirstKey.class);
         job.setMapOutputValueClass(LongWritable.class);
