@@ -168,7 +168,7 @@ This project consists of four steps, implemented as separate Map-Reduce jobs. Ea
             -running time : 21 minutes
 
         ** -number of mappers : 5 **   
-            running time : 44
+            running time : 44 minutes
 
     **partial file:**  **************to complete*********
         
