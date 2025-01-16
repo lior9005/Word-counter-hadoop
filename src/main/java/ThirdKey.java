@@ -1,65 +1,19 @@
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.IOException;
-import java.util.Objects;
+public class ThirdKey extends Key {
 
-import org.apache.hadoop.io.Writable;
-import org.apache.hadoop.io.WritableComparable;
-import org.apache.hadoop.io.Text;
+    public ThirdKey() {
+        super();
+    }
 
-
-public class ThirdKey implements WritableComparable<ThirdKey>{
-	
-    private Text first;
-	private Text second;
-	private Text third;
-
-	public ThirdKey() {
-		this.first = new Text();
-		this.second = new Text();
-		this.third = new Text();		
-	}
-
-    public ThirdKey(String string, String string2, String string3) {
-        this.first = new Text(string);
-		this.second = new Text(string2);
-		this.third = new Text(string3);	
+    public ThirdKey(String first, String second, String third) {
+        super(first, second, third);
     }
 
     public ThirdKey(ThirdKey other) {
-		this.first = other.getFirst();
-		this.second = other.getSecond();
-		this.third = other.getThird();		
-	}
-
-	public Text getFirst() {
-		return this.first;
-	}
-
-	public Text getSecond() {
-		return this.second;
-	}
-
-	public Text getThird() {
-		return this.third;
-	}
+        super(other);
+    }
 
     @Override
-	public void readFields(DataInput in) throws IOException {
-		((Writable) first).readFields(in) ;
-		((Writable) second).readFields(in) ;
-		((Writable) third).readFields(in) ;
-	}
-
-	@Override
-	public void write(DataOutput out) throws IOException {
-		((Writable) first).write(out) ;
-		((Writable) second).write(out) ;
-		((Writable) third).write(out) ;
-	}
-
-    @Override
-	public int compareTo(ThirdKey other) {
+	public int compareTo(Key other) {
 		int comp =0;
 		comp = this.first.toString().compareTo(other.getFirst().toString());
 		if(comp == 0)
@@ -67,14 +21,5 @@ public class ThirdKey implements WritableComparable<ThirdKey>{
 		if(comp == 0)
 			comp = this.third.toString().compareTo(other.getThird().toString());									
 		return comp;
-	}
-
-	@Override
-	public int hashCode() {
-		return Objects.hash(getFirst(), getSecond(), getThird());
-	}
-
-    public String toString() {
-		return first.toString() + " " + second.toString() + " " + third.toString();
 	}
 }

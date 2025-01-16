@@ -38,16 +38,15 @@ This project consists of four steps, implemented as separate Map-Reduce jobs. Ea
             For a triplet containing three words:
                 1. Split the triplet into two word pairs (w1w2 and w2w3)
                 2. Generate keys for each word pair and the individual words within the triplet structure.  
-                3. Assign a tag (t) to distinguish values derived from the triplet. 
             For word pairs or single words:
-                1. Generate a key consisting of the words, with a value that includes the occurrence count and the tag ('f').
+                1. Generate a key consisting of the words, with a value that includes the occurrence count.
 
     Reducer Phase:  
         - Processing: 
          1. Iterate through all values associated with a key.
-         2. Store values tagged with t (triplet-related values) in a list.
-         3. Save the value tagged with f (frequency) as the total occurrence count in the corpus.
-         4. Traverse the t-tagged list, and for each value, emit the triplet as the key. The output value is a 5-element array [C_1, N_1, C_2, N_2, N_3], where:
+         2. Store values which consists of 3 words (triplet-related values) in a list.
+         3. Save the values with less than 3 words (frequency) as the total occurrence count in the corpus.
+         4. Traverse the triplet-related values list, and for each value, emit the triplet as the key. The output value is a 5-element array [C_1, N_1, C_2, N_2, N_3], where:
             - Known variables are populated.
             - Unknown variables are set to -1.
 
@@ -154,7 +153,7 @@ This project consists of four steps, implemented as separate Map-Reduce jobs. Ea
 
     **The complete 3-gram file:**
         ** -number of mappers (instances) : 9 **
-            -number of key-value pairs from mapper to reducer (format: <number of recoreds, size>)
+            -number of key-value pairs from mapper to reducer (format: <number of records, size>)
                 with combiner (we used combiner only in step1):
                     -step1: <4454351, 66686815>
                     -step2: <7565970, 155933679>

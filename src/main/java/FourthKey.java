@@ -4,10 +4,9 @@ import java.io.IOException;
 import java.util.Objects;
 
 import org.apache.hadoop.io.Writable;
-import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.io.Text;
 
-public class FourthKey implements WritableComparable<FourthKey>{
+public class FourthKey extends Key {
 	
     private Text key;
 
@@ -38,9 +37,9 @@ public class FourthKey implements WritableComparable<FourthKey>{
 	}
 
     @Override
-	public int compareTo(FourthKey other) {
+	public int compareTo(Key other) {
 		String[] key1 = ((Text) key).toString().split("\t");
-        String[] key2 = ((Text) other.getKey()).toString().split("\t");
+        String[] key2 = ((Text) ((FourthKey) other).getKey()).toString().split("\t");
 		String[] words1 = key1[0].split(" ");
 		String[] words2 = key2[0].split(" ");
         int num = words1[0].compareTo(words2[0]);
