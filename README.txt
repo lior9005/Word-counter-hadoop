@@ -16,22 +16,46 @@ IDs: 314868019, 316380138
 
 ## Implementation Overview  
 
-This project consists of four steps, implemented as separate Map-Reduce jobs. Each step processes data and generates intermediate results for the subsequent step.
+The project consists of four steps, implemented as separate Map-Reduce jobs. Each step processes data and generates intermediate results for the subsequent step.
+
+**Key Abstraction:** 
+    - The project utilizes an abstract `Key` class to encapsulate sorting logic in the `sort & shuffle` phase.
+    - Each step defines a specific `CompareTo` method within the `Key` class, enabling customized sorting behavior.
+
+* **Key Subclasses:**
+    - `FirstKey`: Implements `CompareTo` for lexicographical order sorting (with consideration of `*` as an empty word).
+    - `FourthKey`: Implements `CompareTo` for lexicographical order sorting of the first two words, followed by sorting based on the probability value.
 
 ### Step 1: Word Counter  
-    Purpose: To filter out stop words and non hebrew words and to count the occurrences of:  
+    **Purpose**: To filter out stop words and non hebrew words and to count the occurrences of:  
         1. Individual words.  
         2. Word pairs.  
         3. Triplets (3-grams).
         4. total words (C_0)  
 
+    **Mapper Phase**:  
+    - **Input**:  
+        Each line contains a triplet and its associated statistics array.  
+    - **Processing**:  
+        1.Checks if the triplet contains a stopword or a non hebrew word
+        2.splits the triplet into 3 words, and emits the words, the joint pairs and the triplet with the value corresponding to the input.
+        3.emits C_0 
+    
+    **Combiner Phase**:
+        - Merge and aggregates the local key values pairs
+
+    **Reducer Phase**:  
+        - Merge and aggregates the counts for each key and saves C_0 (the total words counter) in the bucket
     **Output**:  
         Each triplet is represented with placeholders (`*`) for missing words or pairs.
 
 ---
 
-### Step 2: Formula Generator  
-    Mapper Phase:  
+### Step 2: Formula Generator
+    **Purpose**:
+        - to produce the triplets as keys and an array of arrays of 5 elements which consists of the variables needed for the formula 
+
+    **Mapper Phase**:  
         - Input:  
             Each line represents a triplet and its occurrence count.
         - Processing:  
@@ -39,9 +63,9 @@ This project consists of four steps, implemented as separate Map-Reduce jobs. Ea
                 1. Split the triplet into two word pairs (w1w2 and w2w3)
                 2. Generate keys for each word pair and the individual words within the triplet structure.  
             For word pairs or single words:
-                1. Generate a key consisting of the words, with a value that includes the occurrence count.
+                1. Generate a key consisting of the words, with a value that is the words and their occurrence count.
 
-    Reducer Phase:  
+    **Reducer Phase**:  
         - Processing: 
          1. Iterate through all values associated with a key.
          2. Store values which consists of 3 words (triplet-related values) in a list.
@@ -50,13 +74,16 @@ This project consists of four steps, implemented as separate Map-Reduce jobs. Ea
             - Known variables are populated.
             - Unknown variables are set to -1.
 
-        - Output:
+        **Output**:
          1. Key: Triplet.
          2. Value: A 5-element array containing statistics where two elements are populated and three are set to -1, to be used for probability calculations in the next step.
 
 ---
 
 ### Step 3: Probability Generator  
+    **Purpose**:
+        -To generate the probability for each triplet
+
     **Mapper Phase**:  
         - **Input**:  
             Each line contains a triplet and its associated statistics array.  
@@ -70,13 +97,13 @@ This project consists of four steps, implemented as separate Map-Reduce jobs. Ea
                 P = K_3 * N_3 / C_2 + (1 - K_3) * K_2 * N_2 / C_1 + (1 - K_3) * (1 - K_2) * N_1 / C_0
 
         **Output**:  
-            A triplet (key) with its calculated probability (value).
+            -A triplet (key) with its calculated probability (value).
 
 ---
 
 ### Step 4: Sorter  
     **Purpose**:  
-        To sort the triplets by their probabilities.  
+        -To sort the triplets by their first two words and then by the probability.  
 
     **Mapper Phase**:  
         - Converts the key and value together into a 'fourthKey' object, allowing shuffle & sort according to lexicographical order and probability
@@ -84,6 +111,8 @@ This project consists of four steps, implemented as separate Map-Reduce jobs. Ea
     **Reducer Phase**:  
         - Outputs the sorted triplets along with their probabilities.
 
+    **Output**:
+        - The sorted triplets along with ther probabilities.
 ---
 
 ### Report Summary:
@@ -111,7 +140,7 @@ This project consists of four steps, implemented as separate Map-Reduce jobs. Ea
         ברח מן הבית 	0.15740059245279922 
         ברח מן העיר 	0.12504079505891286
         ברח מן הארץ 	0.11509529885629767
-        ברח מן הכבוד   	0.1105999218486997
+        ברח מן הכבוד 	0.11059992184869970
         ברח מן השררה	0.07528083010405548
 
         דברים אלו לא	0.03397547567122092
@@ -153,7 +182,7 @@ This project consists of four steps, implemented as separate Map-Reduce jobs. Ea
 
     **The complete 3-gram file:**
         ** -number of mappers (instances) : 9 **
-            -number of key-value pairs from mapper to reducer (format: <number of records, size>)
+            -number of key-value pairs from mapper to reducer (format: <number of records, size (bytes)>)
                 with combiner (we used combiner only in step1):
                     -step1: <4454351, 66686815>
                     -step2: <7565970, 155933679>
@@ -167,8 +196,9 @@ This project consists of four steps, implemented as separate Map-Reduce jobs. Ea
             -running time : 21 minutes
 
         ** -number of mappers : 5 **   
-            running time : 44 minutes
+            running time: 44 minutes
 
-    **partial file:**  **************to complete*********
+    **partial file:**  
+        -running time:  1:14 minutes
         
     

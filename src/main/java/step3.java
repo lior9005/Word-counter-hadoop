@@ -25,17 +25,18 @@ import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
 
 public class Step3 {
-    public static class Step3Mapper extends Mapper<LongWritable, Text, ThirdKey, Text> {
+    public static class Step3Mapper extends Mapper<LongWritable, Text, Text, Text> {
         
         @Override
         public void map(LongWritable key, Text line, Context context) throws IOException, InterruptedException {
             String[] parsedLine = line.toString().split("\t");
             String[] words = parsedLine[0].split(" ");
-            context.write(new ThirdKey(words[0], words[1], words[2]), new Text(parsedLine[1]));
+            String w1w2w3 = words[0] + " " + words[1] + " " + words[2];
+            context.write(new Text(w1w2w3), new Text(parsedLine[1]));
         }
     }
 
-    public static class Step3Reducer extends Reducer<ThirdKey, Text, Text, DoubleWritable> {
+    public static class Step3Reducer extends Reducer<Text, Text, Text, DoubleWritable> {
         Long C_0;
 		public void setup(Context output) throws IOException {
 			AmazonS3 s3 = AmazonS3ClientBuilder.standard().withRegion(Regions.US_EAST_1).build();
@@ -45,7 +46,7 @@ public class Step3 {
 		}
 
         @Override
-        public void reduce(ThirdKey key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
+        public void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
             Double[] formulaParams = new Double[5];
             for(Text Textvalues : values){
                 String[] input = Textvalues.toString().trim().split("\\s+");
@@ -79,7 +80,7 @@ public class Step3 {
         job.setMapperClass(Step3Mapper.class);
         job.setReducerClass(Step3Reducer.class);
         job.setInputFormatClass(TextInputFormat.class);
-        job.setMapOutputKeyClass(ThirdKey.class);
+        job.setMapOutputKeyClass(Text.class);
         job.setMapOutputValueClass(Text.class);
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(Text.class);
