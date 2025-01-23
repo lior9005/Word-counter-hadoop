@@ -8,25 +8,25 @@ import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.io.Text;
 
 
-public class ThirdKey implements WritableComparable<ThirdKey>{
+public abstract class Key implements WritableComparable<Key>{
 	
-    private Text first;
-	private Text second;
-	private Text third;
+    protected Text first;
+	protected Text second;
+	protected Text third;
 
-	public ThirdKey() {
+	public Key() {
 		this.first = new Text();
 		this.second = new Text();
 		this.third = new Text();		
 	}
 
-    public ThirdKey(String string, String string2, String string3) {
+    public Key(String string, String string2, String string3) {
         this.first = new Text(string);
 		this.second = new Text(string2);
 		this.third = new Text(string3);	
     }
 
-    public ThirdKey(ThirdKey other) {
+    public Key(Key other) {
 		this.first = other.getFirst();
 		this.second = other.getSecond();
 		this.third = other.getThird();		
@@ -59,15 +59,7 @@ public class ThirdKey implements WritableComparable<ThirdKey>{
 	}
 
     @Override
-	public int compareTo(ThirdKey other) {
-		int comp =0;
-		comp = this.first.toString().compareTo(other.getFirst().toString());
-		if(comp == 0)
-			comp = this.second.toString().compareTo(other.getSecond().toString());
-		if(comp == 0)
-			comp = this.third.toString().compareTo(other.getThird().toString());									
-		return comp;
-	}
+	public abstract int compareTo(Key other);
 
 	@Override
 	public int hashCode() {

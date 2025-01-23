@@ -25,11 +25,11 @@ public class Step2{
             Long occNum = Long.parseLong(parsedLine[1]);
             String[] words = filterAsteriks(parsedLine[0].split(" ")); //filter asteriks
 
-            //context format: <key, value, identifier>
+            //context format: <key, value>
+            Text value = new Text(WordsArrayToString(words) + "\t" + occNum.toString());
             if(words.length == 3){
                 String w1w2 = words[0] + " " + words[1];
                 String w2w3 = words[1] + " " + words[2];
-                Text value = valueGenerator(words, occNum, true);
                 context.write(new Text(w1w2), value); //first pair
                 if(!w1w2.equals(w2w3)){ //check if the pairs are different
                     context.write(new Text(w2w3), value); //second pair
@@ -42,18 +42,11 @@ public class Step2{
                 }                
             }
             else{
-                
-                Text value = valueGenerator(words, occNum, false);
-                context.write(new Text(StringArrayToWords(words)), value);
+                context.write(new Text(WordsArrayToString(words)), value);
             }
         }
 
-        private Text valueGenerator(String[] words, Long occNum, boolean tripletOcc){
-            String identifier = tripletOcc ? "t" : "f";
-            return new Text(StringArrayToWords(words) + "\t" + occNum.toString() + "\t" + identifier);
-        }
-
-        private String StringArrayToWords(String[] words){
+        private String WordsArrayToString(String[] words){
             String res = "";
             for (String word : words){
                 res += word + " ";
@@ -87,7 +80,7 @@ public class Step2{
             String[] parsedKey = key.toString().split(" ");
             for(Text value : values){
                 String[] parsedValue = value.toString().split("\t");
-                if(parsedValue[2].equals("t")){
+                if(parsedValue[0].split(" ").length == 3){ //check if the value came from a triplet
                     triplets.add(parsedValue);
                 }
                 else{
